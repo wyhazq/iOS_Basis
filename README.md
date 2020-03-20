@@ -111,6 +111,12 @@ e.block执行完后，会唤醒链表中等待的线程
 
 
 
+死锁：
+
+dispatch_once 内部再调用同一个 dispatch_once 会造成死锁，循环递归调用了，信号量无法释放，一直阻塞线程。
+
+
+
 6.dispatch_apply 快速迭代
 
 7.dispatch_group 队列组：组内所有任务执行完后，才执行dispatch_group_notify
@@ -165,6 +171,12 @@ e.NSConditionLock 称为条件锁，只有 condition 参数与初始化时候的
 https://juejin.im/post/5a90de68f265da4e9b592b40  GCD
 https://juejin.im/post/5bc5d506e51d450e6867e427  常驻线程
 https://juejin.im/post/5a8fdb1c5188257a856f55a8 谈iOS的锁
+
+https://xiaozhuanlan.com/topic/7916538240 **深入浅出 GCD 之 dispatch_once**
+
+https://blog.csdn.net/u013378438/article/details/81031938 GCD源码吐血分析(1)
+
+https://blog.csdn.net/u013378438/article/details/81076116 GCD源码吐血分析(2)
 
 3.KVO
 
