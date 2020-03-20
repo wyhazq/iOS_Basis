@@ -97,6 +97,20 @@ c.通过obj->__forwarding(访问到原对象)->(objVal)来访问和改变其值
 
 5.dispatch_once 单次
 
+原理：
+
+a.原子性判断block是否被执行(long的0按位取反)，执行过则return
+
+b.没执行过则调用dispatch_once的执行方法
+
+c.内部会先原子性判断token的指针是否为NULL，true则将tail插入vval链表中，执行block，并标记block已执行。
+
+d.同时其他线程进入，判断token的指针不为空，则将线程信息插入vval链表中，线程进入等待状态
+
+e.block执行完后，会唤醒链表中等待的线程
+
+
+
 6.dispatch_apply 快速迭代
 
 7.dispatch_group 队列组：组内所有任务执行完后，才执行dispatch_group_notify
