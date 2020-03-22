@@ -1,68 +1,110 @@
 # iOS_Basis
 
-一、iOS
+# 一、iOS
 
-###0.内存管理
+## 0.内存管理
 
 iOS内存管理分为ARC和MRC。两者从内存管理的本质上讲没有区别，都是通过引用计数机制管理内存，引用计数为0时释放对象。不同的是，在ARC中内存管理由编译器和runtime协同完成。
 
 iOS内存管理的四大原则：
-a.自己生成的对象，自己持有。
-b.非自己生成的对象，自己也能持有。
-c.不再需要自己持有的对象时释放。
-d.非自己持有的对象无法释放。
+
+- 自己生成的对象，自己持有。
+
+- 非自己生成的对象，自己也能持有。
+
+- 不再需要自己持有的对象时释放。
+
+- 非自己持有的对象无法释放。
+
+
 
 iOS内存管理主要分为以下几种处理方式：
-a.alloc，new，copy，mutableCopy生成的对象，编译器会在作用域结束时插入release的释放代码。
-b.autorelese对象，类方法生成的对象，交由autoreleasePool去管理，加入到autoreleasePool中的对象会延迟释放，在autoreleasePool释放时，加入里面的全部对象都会释放。主线程AutoreleasePool创建是在一个RunLoop事件开始之前(push)，AutoreleasePool释放是在一个RunLoop事件即将结束之前(pop)。注意如果遇到内存短时暴增的情况，例如循环多次创建对象时，最好手动加上一个autoreleasePool。
-c.weak指向的对象被释放时，weak指针被赋值为nil
-d.unsafe_unretain，不纳入ARC的管理，需要自己手动管理，用于兼容iOS4的，现在已经很少用到
+
+- alloc，new，copy，mutableCopy生成的对象，编译器会在作用域结束时插入release的释放代码。
+
+- autorelese对象，类方法生成的对象，交由autoreleasePool去管理，加入到autoreleasePool中的对象会延迟释放，在autoreleasePool释放时，加入里面的全部对象都会释放。主线程AutoreleasePool创建是在一个RunLoop事件开始之前(push)，AutoreleasePool释放是在一个RunLoop事件即将结束之前(pop)。注意如果遇到内存短时暴增的情况，例如循环多次创建对象时，最好手动加上一个autoreleasePool。
+
+- weak指向的对象被释放时，weak指针被赋值为nil
+
+- unsafe_unretain，不纳入ARC的管理，需要自己手动管理，用于兼容iOS4的，现在已经很少用到
+
+
 
 内存管理的底层实现：
-程序运行过程中生成的所有对象都会通过其内存地址映射到table_buf中相应的SideTable实例上。
-a.strong：引用计数会保存在isa指针和SideTable(全局有8个)的引用计数表(RefcountMap)中，key为object内存地址，value为引用计数值。[obj retain]时，引用计数表+1。
-b.weak：weak指针的地址会保存在SideTable的弱引用表中，key为object内存地址，value为weak指针数组，当object被释放时，会找到所有对应的weak指针，将他们置为nil。（将所有弱引用obj的指针地址都保存在obj对应的weak_entry_t中。当obj要析构时，会遍历weak_entry_t中保存的弱引用指针地址，并将弱引用指针指向nil，同时，将weak_entry_t移除出weak_table。）
-c.autoreleasePool：
-自动释放池是一个个 AutoreleasePoolPage 组成的一个page是4096字节大小,每个 AutoreleasePoolPage 以双向链表连接起来形成一个自动释放池，内部是一个栈。
-创建：autoreleasePoolPush时会加入一个边界对象
-加入：当对象调用 autorelease 方法时，会将对象加入 AutoreleasePoolPage 的栈中
-销毁：pop 时是传入边界对象,然后对page 中从栈顶到边界对象出栈并发送release消息
 
-浅拷贝和深拷贝
+
+> 程序运行过程中生成的所有对象都会通过其内存地址映射到table_buf中相应的SideTable实例上。
+
+
+
+- strong：引用计数会保存在isa指针和SideTable(全局有8个)的引用计数表(RefcountMap)中，key为object内存地址，value为引用计数值。[obj retain]时，引用计数表+1。
+
+- weak：weak指针的地址会保存在SideTable的弱引用表中，key为object内存地址，value为weak指针数组，当object被释放时，会找到所有对应的weak指针，将他们置为nil。（将所有弱引用obj的指针地址都保存在obj对应的weak_entry_t中。当obj要析构时，会遍历weak_entry_t中保存的弱引用指针地址，并将弱引用指针指向nil，同时，将weak_entry_t移除出weak_table。）
+
+- autoreleasePool：
+  自动释放池是一个个 AutoreleasePoolPage 组成的一个page是4096字节大小,每个 AutoreleasePoolPage 以双向链表连接起来形成一个自动释放池，内部是一个栈。
+  
+  - 创建：autoreleasePoolPush时会加入一个边界对象
+  
+  - 加入：当对象调用 autorelease 方法时，会将对象加入 AutoreleasePoolPage 的栈中
+  
+  - 销毁：pop 时是传入边界对象,然后对page 中从栈顶到边界对象出栈并发送release消息
+
+
+
+## 浅拷贝和深拷贝
+
 copy方法利用基于NSCopying方法约定，由各类实现的copyWithZone:方法生成并持有对象的副本。
 mutableCopy方法利用基于NSMutableCopying方法约定，由各类实现的mutableCopyWithZone:方法生成并持有对象的副本。
 浅拷贝：指向对象地址不变
 深拷贝：指向对象地址变了，拷贝了多一份新对象出来
 集合：集合对象是深拷贝，元素是浅拷贝
 
-内存泄漏常见场景：
-a.两个对象互相持有或者几个对象间形成循环引用链
-b.block与对象间互相持有
-c.NSTimer的target持有了self
+### 内存泄漏常见场景：
 
-内存泄漏检测：
-MLeaksFinder 找到内存泄漏对象
+- 两个对象互相持有或者几个对象间形成循环引用链
+
+- block与对象间互相持有
+
+- NSTimer的target持有了self
+
+
+
+### 内存泄漏检测：
+
+#### MLeaksFinder 找到内存泄漏对象
+
 原理：
 1.通过运行时 hook 系统的 viewdidDisappear 等页面消失的方法，在 hook 的方法里面调用添加的willDealloc（）方法。
+
+
 2.NSObject的 willDealloc（）方法会有一个延迟执行 2s 的 alert 弹框，如果 2s 以后对象被释放，系统会把对象指针设置为nil，2s 以后也就不会有弹框出现，所以根据 2s 以后有没有弹框来判断对象有没有正确的释放。
+
+
 3.最后会有一个 proxy 实例 objc_setAssociatedObject 在 object 上，如果上述弹窗提示未被释放的对象最后又释放了，则会调用 proxy 实例的 dealloc 方法，然后弹窗提示用户对象最终还是释放了，避免了错误的判断。
 
-FBRetainCycleDetector 检测是否有循环引用
+
+
+#### FBRetainCycleDetector 检测是否有循环引用
+
 原理：
 1.找出 Object（ Timer 类型因为 Target 需要区别对待 ），每个 Object associate 的 Object，Block 这几种类型的 Strong Reference。
 2.最开始就是自身，把 Self 作为根节点，沿着各个 Reference 遍历，如果形成了环，则存在循环依赖。
 
 参考
-内存管理：https://juejin.im/post/5abe543bf265da23784064dd#heading-46
-内存管理深入：https://juejin.im/post/5ddbf5a551882572fa6a909b
-AutoreleasePool原理：https://juejin.im/post/5b052282f265da0b7156a2aa
-MLeaksFinder / FBRetainCycleDetector 分析：https://juejin.im/post/5b80fdacf265da437a469986#heading-4
+[内存管理](https://juejin.im/post/5abe543bf265da23784064dd#heading-46)
+[内存管理深入](https://juejin.im/post/5ddbf5a551882572fa6a909bhttps://juejin.im/post/5ddbf5a551882572fa6a909b)
+[AutoreleasePool原理](https://juejin.im/post/5b052282f265da0b7156a2aa)
+[MLeaksFinder / FBRetainCycleDetector 分析](https://juejin.im/post/5b80fdacf265da437a469986#heading-4)
 
-###1.block
+
+### 1.block
 
 带有自动变量的匿名函数，block也是一个对象
 
-常见类型：_NSConcreteStackBlock，_NSConcreteMallocBlock，_NSConcreteGlobalBlock
+常见类型：`_NSConcreteStackBlock` 、`_NSConcreteMallocBlock`、`_NSConcreteGlobalBlock`
+
+
 
 ARC下，block从栈上拷贝到堆上的情况：
 a.block作为函数返回值时
@@ -74,10 +116,12 @@ d.block作为GCD API的方法参数时
 a.block内部用到才捕获
 b.自动变量，不带__block修饰，捕获值，带__block修饰，包装成一个对象，捕获其地址。
 
+
+
 __block原理：
-a.生成一个对象obj，内部含指向自身的指针__forwarding
-b.对象传入block中，ARC下block会拷贝到堆上，联同这个对象obj
-c.通过obj->__forwarding(访问到原对象)->(objVal)来访问和改变其值
+    a. 生成一个对象obj，内部含指向自身的指针__forwarding
+    b. 对象传入block中，ARC下block会拷贝到堆上，联同这个对象obj
+    c. 通过obj->__forwarding(访问到原对象)->(objVal)来访问和改变其值
 
 
 
@@ -87,15 +131,20 @@ GCD的block不会产生循环引用，queue在执行完block后会将block置为
 
 
 
-###2.多线程
+## 多线程
 
-1.一个线程可以包含多个队列
+#### 1.一个线程可以包含多个队列
+
 主线程和主队列：主线程执行的不一定是主队列的任务，可能是其他队列任务；主队列的任务一定会放在主线程执行。使用是否是主队列的判断来替代是否是主线程（isMainThread），是更严谨的做法，因为有一些Framework代码如MapKit，不仅会要求代码在主线程执行，还要求在主队列。
 
-2.6种情况
-        主(当前)队列            串行队列            并行队列    
-同步        死锁                    当前线程串行        当前线程串行
-异步        当前线程按加入顺序串行    新线程串行        新线程并行
+#### 2. 6种情况
+
+|      | 串行队列                   | 并行队列      |
+| ---- | ---------------------- | --------- |
+| 同步任务 | 当前队列死锁，非当前队列则在当前线程串行执行 | 当前线程、串行执行 |
+| 异步任务 | 子线程、串行                 | 子线程、并行    |
+
+
 
 3.dispatch_barrier_async 将异步并行任务分割
 
@@ -115,13 +164,9 @@ d.同时其他线程进入，判断token的指针不为空，则将线程信息�
 
 e.block执行完后，会唤醒链表中等待的线程
 
-
-
 死锁：
 
 dispatch_once 内部再调用同一个 dispatch_once 会造成死锁，循环递归调用了，信号量无法释放，一直阻塞线程。
-
-
 
 6.dispatch_apply 快速迭代
 
@@ -376,8 +421,6 @@ UIView是CALayer的delegate，是CALayer的封装，同时继承与UIResponder�
 二、网络
 
 1.IP，TCP，HTTP，HTTPS，Socket
-
-
 
 ### TCP三次握手
 
