@@ -2,7 +2,7 @@
 
 一、iOS
 
-0.内存管理
+###0.内存管理
 
 iOS内存管理分为ARC和MRC。两者从内存管理的本质上讲没有区别，都是通过引用计数机制管理内存，引用计数为0时释放对象。不同的是，在ARC中内存管理由编译器和runtime协同完成。
 
@@ -58,7 +58,7 @@ FBRetainCycleDetector 检测是否有循环引用
 AutoreleasePool原理：https://juejin.im/post/5b052282f265da0b7156a2aa
 MLeaksFinder / FBRetainCycleDetector 分析：https://juejin.im/post/5b80fdacf265da437a469986#heading-4
 
-1.block
+###1.block
 
 带有自动变量的匿名函数，block也是一个对象
 
@@ -79,9 +79,15 @@ a.生成一个对象obj，内部含指向自身的指针__forwarding
 b.对象传入block中，ARC下block会拷贝到堆上，联同这个对象obj
 c.通过obj->__forwarding(访问到原对象)->(objVal)来访问和改变其值
 
+
+
 常见问题：循环引用，加__weak解决
 
-2.多线程
+GCD的block不会产生循环引用，queue在执行完block后会将block置为nil，防止循环引用。
+
+
+
+###2.多线程
 
 1.一个线程可以包含多个队列
 主线程和主队列：主线程执行的不一定是主队列的任务，可能是其他队列任务；主队列的任务一定会放在主线程执行。使用是否是主队列的判断来替代是否是主线程（isMainThread），是更严谨的做法，因为有一些Framework代码如MapKit，不仅会要求代码在主线程执行，还要求在主队列。
@@ -178,7 +184,7 @@ https://blog.csdn.net/u013378438/article/details/81031938 GCD源码吐血分析(
 
 https://blog.csdn.net/u013378438/article/details/81076116 GCD源码吐血分析(2)
 
-3.KVO
+###3.KVO
 
 1.实现
 当一个对象使用了KVO监听，iOS系统会修改这个对象的isa指针，改为指向一个全新的通过Runtime动态创建的子类，子类拥有自己的set方法实现，set方法实现内部会顺序调用willChangeValueForKey方法、原来的setter方法实现、didChangeValueForKey方法，而didChangeValueForKey方法内部又会调用监听器的observeValueForKeyPath:ofObject:change:context:监听方法。
@@ -199,7 +205,7 @@ c.调用自定义的观察者回调
 
 https://juejin.im/post/5adab70cf265da0b736d37a8
 
-4.KVC
+###4.KVC
 
 当调用setValue：属性值 forKey：@”name“的代码时，底层的执行机制如下：
 
@@ -303,6 +309,9 @@ CADisplayLink是一个执行频率（fps）和屏幕刷新相同（可以修改p
 7.各种优化
 
 界面卡顿优化
+
+检测卡顿：YYFPSLabel，用CADisplayLink实现的
+
 CPU：
 1.不需要响应触摸的，用CALayer代替，复用代价小的类，尽量使用缓存池复用
 2.减少对frame/bounds/transform的修改，避免调整视图层次、添加和移除视图
@@ -332,11 +341,37 @@ a.符号断点，在断点栏添加Symbolic
 b.condition，可以为变量添加断点条件
 c.action，可以添加断点时的表达式，比如打印，赋值等
 
-9.编译、构建
 
-10.三方库
 
-11.启动流程和优化
+#### 9.缓存
+
+内存缓存，一般由NSCache实现，可设置数目和大小限制，超过会受到内存警告通知，线程安全类。
+
+
+
+
+
+10.编译、构建
+
+11.三方库
+
+12.启动流程和优化
+
+
+
+#### 13.UIKit
+
+UIView是CALayer的delegate，是CALayer的封装，同时继承与UIResponder，负责响应交互；CALayer负责显示和动画。
+
+
+
+#### 14.Fundation
+
+1.NSHashTable，可存弱引用的NSSet
+
+2.NSMapTable，可存弱引用的NSDictionary
+
+
 
 二、网络
 
