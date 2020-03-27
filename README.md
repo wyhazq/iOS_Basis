@@ -550,4 +550,379 @@ HTTPDNS
 
 3.热更新
 
-四、算法
+
+
+##四、算法
+
+复杂度
+logn:对数复杂度，while(i < n) { i = 2 * i }。
+
+链表
+
+0.结构
+ListNode {
+	data
+	ListNode *next
+}
+
+1.给头结点和目标节点，O(1)删除目标节点：把目标节点的下一节点值赋值给目标节点，然后删除目标节点的下一个节点
+a.目标节点node.value = node.next.value
+b.目标节点node.next = node.next.next
+
+
+2.翻转单链表：用三个临时指针pre, cur, suf在链表上遍历一遍即可
+a.pre = null, cur = head.next, suf = cur.next
+b.while(cur.next != null) cur.next = pre, pre = cur, cur = suf, suf = suf.next
+c.pre为头结点
+
+
+3.删除倒数第n个节点
+a.用两个临时节点，pre 和 suf，suf先向前移n位
+b.当suf != null 或 suf.next != null，pre, suf一起向前移，直到为null
+c.此时pre.next为倒数第N个节点，删除
+
+
+4.求单链表的中间节点:
+a.快慢指针(fast, slow)
+b.fast每次移两位，slow移动一位，直到fast == null 或 fast.next == null时
+c.s为中间节点
+
+5.删除排序链表中重复的结点
+a.用两个临时指针，pre, cur, 重复标志位flag, 遍历
+b.如果cur.value == cur.next.value，则 cur.next = cur.next.next，flag = true, continue
+c.否则判断flag == true，删除当前节点，cur前移，pre.next = cur,flag = false, continue
+d.pre和cur正常前移
+
+二叉树
+
+0.结构
+TreeNode {
+	data
+	TreeNode *left
+	TreeNode *right
+}
+
+1.前序遍历：根 左 右
+preOrder(TreeNode *node) {
+	visit(node.data)
+	preOrder(node.left)
+	preOrder(node.right)
+}
+
+2.中序遍历：左 根 右
+inOrder(TreeNode *node) {
+	inOrder(node.left)
+	visit(node.data)
+	inOrder(node.right)
+}
+
+3.后序遍历：左 右 根
+postOrder(TreeNode *node) {
+	postOrder(node.left)
+	postOrder(node.right)
+	visit(node.data)
+}
+
+
+
+4.堆
+
+一种特殊的完全二叉树结构
+
+堆排序
+
+a.建立最小堆(小根堆)或者最大堆(大根堆)
+
+b.堆首尾对换，剩下的重复a
+
+``` c
+void swap(int arr[], int i, int j) {
+    int temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+
+int root(int j) {
+    return (j - 1) / 2;
+}
+
+int left(int j) {
+    return 2 * j + 1;
+}
+
+int right(int j) {
+    return 2 * j + 2;
+}
+
+void maxHeap(int arr[], int n) {
+    
+    for (int i = 1; i < n; i++) {
+        int j = i;
+        while (j > 0 && arr[root(j)] < arr[j]) {
+            swap(arr, root(j), j);
+            j = root(j);
+        }
+    }
+}
+
+void heapSort(int arr[], int n) {
+
+    for (int i = n; i > 1; i--) {
+        maxHeap(arr, i);
+        swap(arr, 0, i - 1);
+    }
+}
+
+int main(int argc, const char * argv[]) {
+    
+    int arr[] = {5, 3, 1, 2, 4, 8, 6, 9};
+    int count = sizeof(arr) / sizeof(arr[0]);
+
+    heapSort(arr, count);
+    
+    for (int i = 0; i < count; i++) {
+        printf("%d", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+
+
+Top K
+
+a.建立一个k个数的最小堆(小根堆)
+
+b.遍历数组，与对顶比较，大于堆顶的对换堆顶
+
+c.调整最小堆
+
+复杂度：O(n logk)
+
+``` c
+void swap(int arr[], int i, int j) {
+    int temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+
+int root(int j) {
+    return (j - 1) / 2;
+}
+
+int left(int j) {
+    return 2 * j + 1;
+}
+
+int right(int j) {
+    return 2 * j + 2;
+}
+
+void minHeap(int arr[], int k) {
+    
+    for (int i = 1; i < k; i++) {
+        int j = i;
+        
+        while (j > 0 && arr[root(j)] > arr[j]) {
+            swap(arr, root(j), j);
+            j = root(j);
+        }
+    }
+}
+
+void adjustMinHeap(int arr[], int k, int i) {
+    if (arr[i] < arr[0]) {
+        return;
+    }
+    
+    swap(arr, 0, i);
+    int j = 0;
+    while ((left(j) < k && arr[j] > arr[left(j)]) || (right(j) < k && arr[j] > arr[right(j)])) {
+        if (arr[left(j)] < arr[right(j)]) {
+            swap(arr, j, left(j));
+            j = left(j);
+        }
+        else {
+            swap(arr, j, right(j));
+            j = right(j);
+        }
+    }
+}
+
+void topK(int arr[], int n, int k) {
+    minHeap(arr, k);
+    
+    for (int i = k; i < n; i++) {
+        adjustMinHeap(arr, k, i);
+    }
+}
+
+int main(int argc, const char * argv[]) {
+    
+    int arr[] = {5, 3, 1, 2, 4, 8, 6, 9};
+    int count = sizeof(arr) / sizeof(arr[0]);
+    int k = 3;
+    topK(arr, count, k);
+    
+    for (int i = 0; i < k; i++) {
+        printf("%d", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+
+
+
+
+https://zhuanlan.zhihu.com/p/37350934
+
+https://www.cnblogs.com/xiugeng/p/9645972.html
+
+
+
+
+排序
+
+1.快排
+分治+递归
+a.找到基准数，遍历范围数组，左小右大，最后把基准数放到正确位置，返回基准数位置。
+b.递归low~p-1
+c.递归p+1~high
+
+优化：基准数的选取，比如每次都在3个基准数中取中间值
+
+``` c
+int partition(int arr[], int left, int right) {
+    int index = arr[left];
+    
+    while (left < right) {
+        while (left < right && arr[right] > index) {
+            right--;
+        }
+        arr[left] = arr[right];
+        
+        while (left < right && arr[left] < index) {
+            left++;
+        }
+        arr[right] = arr[left];
+    }
+    arr[left] = index;
+    
+    return index;
+}
+
+void quickSort(int arr[], int left, int right) {
+    
+    if (left < right) {
+        int index = partition(arr, left, right);
+        quickSort(arr, left, index - 1);
+        quickSort(arr, index + 1, right);
+    }
+}
+
+int main() {
+    
+    int arr[] = {5, 3, 1, 2, 4};
+    int count = sizeof(arr) / sizeof(arr[0]);
+    quickSort(arr, 0, count);
+    for (int i = 0; i < count; i++) {
+        printf("%d", arr[i]);
+    }
+    
+    return 0;
+}
+
+```
+
+
+
+2.归并
+a.将排序数组对半分，分到最小，然后合并它们
+b.合并的过程中排序，返回已排序数组
+
+优化：合并时可先判断arr[mid] < arr[mid + 1]，如果为true，则跳过此次合并
+
+``` c
+void merge(int *arr, int left, int right) {
+    int mid = (left + right) / 2;
+    int lLen = mid - left + 1;
+    int rLen = right - mid;
+    
+    int lArr[lLen], rArr[rLen];
+    
+    memcpy(lArr, arr + left, sizeof(int) * lLen);
+    memcpy(rArr, arr + mid + 1, sizeof(int) * rLen);
+    
+    int i = 0, j = 0;
+    while (i < lLen && j < rLen) {
+        arr[left++] = lArr[i] < rArr[j] ? lArr[i++] : rArr[j++];
+    }
+    
+    while (i < lLen) {
+        arr[left++] = lArr[i++];
+    }
+    
+    while (j < rLen) {
+        arr[left++] = rArr[j++];
+    }
+}
+
+void mergeSort(int *arr, int left, int right) {
+
+    if (left < right) {
+        int mid = (left + right) / 2;
+        
+        mergeSort(arr, left, mid);
+        mergeSort(arr, mid + 1, right);
+        merge(arr, left, right);
+    }
+    
+}
+
+int main(int argc, const char * argv[]) {
+    
+    int arr[] = {5, 3, 1, 2, 4, 8, 6, 9};
+    int count = sizeof(arr) / sizeof(arr[0]);
+    mergeSort(arr, 0, count - 1);
+    for (int i = 0; i < count; i++) {
+        printf("%d", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+
+
+3.希尔排序
+
+a.设置一个增量分割数组，然后进行插入排序，然后缩小增量，直到增量足够小，通常为1时
+
+b.对整体进行一次插入排序(类似于扑克牌整理顺序那样)
+
+优化：增量的选取
+
+``` c
+void shellSort(int arr[], int count) {
+    int increment = count / 2;
+    int i, j, temp;
+    
+    for (; increment > 0; increment /= 2) {
+        
+        for (i = increment; i < count; i++) {
+            temp = arr[i];
+            
+            for (j = i - increment; j >= 0 && temp < arr[j]; j -= increment) {
+                arr[j + increment] = arr[j];
+            }
+            arr[j + increment] = temp;
+        }
+    }
+}
+```
+
+
+
