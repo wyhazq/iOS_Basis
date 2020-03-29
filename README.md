@@ -602,17 +602,58 @@ c.action，可以添加断点时的表达式，比如打印，赋值等
 
 11.三方库
 
-12.启动流程和优化
+### 12.启动流程和优化
 
 
 
-#### 13.UIKit
+#### main函数之前
+
+1. 加载可执行文件。（`App`里的所有`.o`文件）
+2. 加载动态链接库，进行`rebase`指针调整和`bind`符号绑定。
+3. `ObjC`的`runtime`初始化。 包括：`ObjC`相关`Class`的注册、`category`注册、`selector`唯一性检查等。
+4. 初始化。 包括：执行`+load()`方法、用`attribute((constructor))`修饰的函数的调用、创建`C++`静态全局变量等。
+5. 调用main函数
+
+
+
+#### main函数之后
+
+1. UIApplicationMain
+
+   1. 创建UIApplication对象
+   2. 创建UIApplication的delegate对象
+   3. 创建MainRunloop
+   4. delegate对象开始处理(监听)系统事件(没有storyboard)
+2. 根据Info.plist获得最主要storyboard的文件名,加载最主要的storyboard(有storyboard)
+3. 程序启动完毕的时候, 就会调用代理的application:didFinishLaunchingWithOptions:方法
+4. 在application:didFinishLaunchingWithOptions:中创建UIWindow
+   创建和设置UIWindow的rootViewController
+5.  显示第一个窗口
+
+
+
+#### 优化
+
+main之前
+
+1. 减少使用 `+load()`方法
+2. 优化类、方法、全局变量。减少加载启动后不会去使用的类或方法；少用C++全局变量；
+3. 二进制重排？
+
+main之后
+
+1. 优化首屏渲染前的功能初始化，SDK初始化那些
+2. 优化主线程耗时操作，防止屏幕卡顿。首先检查首屏渲染前，主线程上的耗时操作。将耗时操作滞后或异步处理。 通常的耗时操作有：网络加载、编辑、存储图片和文件等资源。 针对耗时操作做相对应的优化即可。
+
+
+
+### 13.UIKit
 
 - UIView是CALayer的delegate，是CALayer的封装，同时继承与UIResponder，负责响应交互；CALayer负责显示和动画。
 
 
 
-#### 14.Fundation
+### 14.Fundation
 
 - NSHashTable，可存弱引用的NSSet
 - NSMapTable，可存弱引用的NSDictionary
