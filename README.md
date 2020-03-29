@@ -753,9 +753,40 @@ fastlane
 
 ### 2.MVC，MVP，MVVM
 
+
+
 ### 3.Hybrid
 
+
+
 ### 4.热更新
+
+#### 轻量级热更新方案
+
+JavaScriptCore + Aspects，将Aspects的各个方法注入到JSContext中
+
+1. JS调用注入的替换方法，传入ClassName，Selector，function。
+2. OC收到后调用Aspects方法，接收到回调之后
+3. 执行JS传过来的function，传入Aspects回调的参数
+
+
+
+#### Aspects原理
+
+1. 动态生成子类，把类的isa指针指向子类，block包装成对象
+2. 把子类的`forwardInvocation`的IMP替换成`__ASPECTS_ARE_BEING_CALLED__`
+3. 子类添加方法Aspects_XX，IMP为原方法的实现
+4. 替换子类XX方法的IMP为`forwardInvocation`
+5. 外部调用XX方法时，会直接进入转发流程，然后调用`__ASPECTS_ARE_BEING_CALLED__`
+6. `__ASPECTS_ARE_BEING_CALLED__`内部会把传过来的invocation的selector(XX)替换为Aspects_XX
+7. 包装好，根据切入时机调用外部回调
+
+
+
+#### JSPatch
+
+1. `UIView.alloc().init()` 替换成 `UIView.__c('alloc')().__c('init')()`
+2. 添加和替换方法，原方法指向`forwardInvocation`到自定义的JPXXX方法，然后再调用JS
 
 
 
