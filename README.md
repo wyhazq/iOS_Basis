@@ -831,7 +831,9 @@ JavaScriptCore + Aspects，将Aspects的各个方法注入到JSContext中
 
 
 
-### 如何重写对象的 `- isEqual:`方法
+## 基础细节
+
+### 1. 如何重写对象的 `- isEqual:`方法
 
 ```objective-c
 @interface Person : NSObject
