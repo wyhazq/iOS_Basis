@@ -831,9 +831,93 @@ JavaScriptCore + Aspects，将Aspects的各个方法注入到JSContext中
 
 
 
-##四、算法
+### 如何重写对象的 `- isEqual:`方法
+
+```objective-c
+@interface Person : NSObject
+@property(copy, nonatomic) NSString *name;
+@property(assign, nonatomic) NSUInteger age;
+@end
+  
+@implementation Person
+
+@end
+```
+
+以上面的代码为例，首先重写判断相等的方法:
+
+```objective-c
+- (BOOL)isEqual:(id)object {
+  	// 指针相等，肯定相等
+    if (self == object) {
+        return YES;
+    }
+    
+  	// 过滤非同类型的对比，减少类型转换带来的消耗
+    if (![object isKindOfClass:[Person class]]) {
+        return NO;
+    }
+    
+    return [self isEqualToPerson:(Person *)object];
+}
+
+- (BOOL)isEqualToPerson:(Person *)person {
+  	// 做参数有效性校验
+    if (!person) {
+        return NO;
+    }
+    
+  	// 关键属性校验
+  	BOOL hasSameName = [self.name isEqualToString:person.name];
+  	BOOL hasSameAge = (self.age == person.age);
+    BOOL result = (hasSameName && hasSameAge);
+    return result;
+}
+```
+
+上面的代码完成了对 `Person` 的 `- isEqual:` 方法的重写。
+
+当有一个新的类 `GoodPerson` 继承自 `Person` 时，也需要重写 `- isEqual:` 方法，且需要调用父类的方法来判断是否相等:
+
+```objective-c
+- (BOOL)isEqual: (id)object
+{
+    // 父类判断不相等，则不相等
+    if(![super isEqual: object]) {
+        return NO;
+    }
+    
+    // 父类已判定相等，子类属性对比
+    GoodPerson *p = (GoodPerson *)object;
+    return [self.birthday isEqual:p.birthday];
+}
+```
 
 
+
+`NSSet` 、`NSDictionary` 中，无论有多少个对象，都能以很快的速度查找到我们想要的指定对象，这依赖于 `hash` 。当对象被加入到 `NSSet` 等 Hash Table 中，或者作为 `NSDictionary` 的 `key` 时， 会调用对象的 `- hash` 方法。
+
+>A hash table is basically a big array with special indexing. Objects are placed into an array with an index that corresponds to their hash. The hash is essentially a pseudorandom number generated from the object's properties. The idea is to make the index random enough to make it unlikely for two objects to have the same hash, but have it be fully reproducible. When an object is inserted, the hash is used to determine where it goes. When an object is looked up, its hash is used to determine where to look.
+>
+>In more formal terms, the hash of an object is defined such that two objects have an identical hash if they are equal. Note that the reverse is not true, and can't be: two objects can have an identical hash and not be equal. You want to try to avoid this as much as possible, because when two unequal objects have the same hash (called a *collision*) then the hash table has to take special measures to handle this, which is slow. However, it's provably impossible to avoid it completely.
+
+两个对象如果相等，那么它们的 `hash` 值必然相同，因此，当重写 `- isEqual:` 时，必须也重写 `- hash` 方法，可以使用异或 `XOR` 来快速生成多个属性结合后的 `hash` 值。
+
+```
+- (NSUInteger)hash
+{
+    return [_name hash] ^ _age;
+}
+```
+
+参考:
+
+- [**Implementing Equality and Hashing**](**https://www.mikeash.com/pyblog/friday-qa-2010-06-18-implementing-equality-and-hashing.html**)
+- [Equality](https://nshipster.com/equality/)
+
+
+
+## 四、算法
 
 ### 复杂度
 
