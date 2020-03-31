@@ -121,7 +121,7 @@ mutableCopy方法利用基于NSMutableCopying方法约定，由各类实现的mu
 
 #### 常见类型
 
-- _NSConcreteStackBlock			不被强引用持有的block	
+- _NSConcreteStackBlock            不被强引用持有的block	
 - _NSConcreteMallocBlock          常见的block
 - _NSConcreteGlobalBlock          全局block
 
@@ -132,6 +132,9 @@ a.block作为函数返回值时
 b.将block赋值给__strong指针时(强引用)
 c.block作为Cocoa API方法名含有UsingBlock的方法参数时
 d.block作为GCD API的方法参数时
+
+#### 不会拷贝到堆上的情况：
+a.block作为函数的参数，除了作为GCD的参数和UsingBlock的情况
 
 捕获：
 a.block内部用到才捕获
