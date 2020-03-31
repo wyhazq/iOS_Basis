@@ -65,7 +65,12 @@ mutableCopy方法利用基于NSMutableCopying方法约定，由各类实现的mu
 深拷贝：指向对象地址变了，拷贝了多一份新对象出来
 集合：集合对象是深拷贝，集合内元素是浅拷贝
 
+##### copy
+NSString的内存标识符为strong的话，外部可能会将NSMutableString赋给NSString，不会造成安全问题，但如果不希望对象改变的话，建议使用copy。
+NSMutableString的内存标识符不能为copy，否则赋值之后会变成NSString，可能造成闪退。
 
+##### instancetype
+关联返回类型，会返回一个方法所在类类型的对象，能让编译在编译的时候去判断一些错误，id则不会判断。
 
 #### 内存泄漏常见场景
 
@@ -544,7 +549,16 @@ Timer，事件响应，常驻线程
 
 CADisplayLink是一个执行频率（fps）和屏幕刷新相同（可以修改preferredFramesPerSecond改变刷新频率）的定时器，它也需要加入到RunLoop才能执行。与NSTimer类似，CADisplayLink同样是基于CFRunloopTimerRef实现，底层使用mk_timer（可以比较加入到RunLoop前后RunLoop中timer的变化）。和NSTimer相比它精度更高（尽管NSTimer也可以修改精度），不过和NStimer类似的是如果遇到大任务它仍然存在丢帧现象。通常情况下CADisaplayLink用于构建帧动画，看起来相对更加流畅，而NSTimer则有更广泛的用处。
 
-
+#### 触摸事件响应
+1. 苹果注册了一个Source1来接收系统事件
+2. 一个触摸事件发生后，IOKit会生成一个IOHIDEvent事件并由SpringBoard接收
+3. 接收后通过mach port发送给在前台运行的App
+4. App的runloop接收到触摸事件后触发回调，调用_UIApplicationHandleEventQueue进行分发
+5. _UIApplicationHandleEventQueue会把触摸事件打包成UIEvent，发送给UIWindow
+6. UIWindow里分两种情况处理，看是UIGesture还是触摸事件UITouch
+7. UIGesture识别成功后将action发送到对应的target，结束
+8. touch事件会沿着响应链查找响应者，找到之后把事件发送给响应者，结束
+9. 找不到响应者则不作处理
 
 ### 7.各种优化
 
@@ -653,7 +667,9 @@ main之后
 ### 13.UIKit
 
 - UIView是CALayer的delegate，是CALayer的封装，同时继承与UIResponder，负责响应交互；CALayer负责显示和动画。
-
+- UIButton继承链：UIControl UIView UIResponder NSObject
+- target-action：将一个动作发送给一个目标处理，原理上还是消息发送 
+- UIEvent事件：触摸，动效(设备摇动)，远程控制，按压
 
 
 ### 14.Fundation
