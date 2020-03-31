@@ -1003,6 +1003,30 @@ postOrder(TreeNode *node) {
 }
 ```
 
+4.翻转二叉树
+从上到下，左子树和右字数对换
+``` c
+mirror(TreeNode *node) {
+  if (node == null) {
+    return;
+  }
+  if (node.left == null && node.right == null) {
+    return;
+  }
+
+  TreeNode *temp = node.left;
+  node.left = node.right;
+  node.right = temp;
+
+  if (node.left != null) {
+    mirror(node.left);
+  }
+  if (node.right != null) {
+    mirror(node.right);
+  }
+}
+```
+
 4.堆
 
 一种特殊的完全二叉树
