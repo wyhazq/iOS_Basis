@@ -2,6 +2,100 @@
 
 
 
+## 目录
+
+[**一、iOS**](#一、iOS)
+
+[0.内存管理](#0.内存管理)
+
+​	[四大原则](#四大原则)		[ARC处理方式](#ARC处理方式)		[底层实现](#底层实现)		[浅拷贝和深拷贝](#浅拷贝和深拷贝)		[内存泄漏常见场景](#内存泄漏常见场景)
+
+​	[内存泄漏检测](#内存泄漏检测)
+
+[1.block](#1.block)
+
+​	[常见类型](#常见类型)		[拷贝到堆上](#拷贝到堆上)		[不会拷贝到堆上](#不会拷贝到堆上)		[捕获](#捕获)		[`__block` 原理](#`__block` 原理)
+
+​	[常见问题](#常见问题)
+
+[2.多线程](#2.多线程)
+
+​	[线程与队列关系](#线程与队列关系)		[6种情况](#6种情况)		[dispatch_barrier](#dispatch_barrier)		[dispatch_after](#dispatch_after)		[dispatch_once](#dispatch_once)
+
+​	[dispatch_apply](#dispatch_apply)		[dispatch_group](#dispatch_group)		[dispatch_semaphore](#dispatch_semaphore)		[NSOperation](#NSOperation)
+
+​	[常驻线程](#常驻线程)		[线程安全](#线程安全)		[线程调度](#线程调度)		[线程状态](#线程状态)		[锁](#锁)
+
+[3.KVO](#3.KVO)
+
+​	[实现](#实现)		[手动触发](#手动触发)		[自己实现](#自己实现)
+
+[4.KVC](#4.KVC)
+
+​	[原理](#原理)
+
+[5.runtime](#5.runtime)
+
+​	[入口函数](#入口函数)		[什么是runtime](#什么是runtime)		[结构](#结构)		[消息发送](#消息发送)		[动态解析](#动态解析)
+
+​	[消息转发](#消息转发)		[方法调换](#方法调换)		[category](#category)		[runtime与内存管理](#runtime与内存管理)
+
+[6.runloop](#6.runloop)
+
+​	[结构](#结构)		[流程](#流程)		[应用](#应用)		[CADisplayLink](#CADisplayLink)		[触摸事件响应](#触摸事件响应)
+
+[7.各种优化](#7.各种优化)
+
+​	[界面卡顿优化](#界面卡顿优化)		[启动流程和优化](#启动流程和优化)
+
+[8.调试 LLDB](#8.调试 LLDB)
+
+[9.缓存](9.缓存)
+
+[10.编译、构建](#10.编译、构建)
+
+[11.三方库](#11.三方库)
+
+[12.UIKit](#12.UIKit)
+
+[13.Fundation](#13.Fundation)
+
+
+
+[**二、网络**](#二、网络)
+
+[1.TCP](#1.TCP)
+
+[2.HTTP](#2.HTTP)
+
+[3.HTTPS](#3.HTTPS)
+
+[4.HTTPDNS](#4.HTTPDNS)
+
+[5.网络优化](#5.网络优化)
+
+
+
+[**三、架构**](#三、架构)
+
+[0.组件化](#0.组件化)
+
+[1.打包](#1.打包)
+
+[2.项目架构分层](#2.项目架构分层)
+
+[3.Hybrid](#Hybrid)
+
+[4.热更新](#4.热更新)
+
+
+
+[**四、算法**](#四、算法)
+
+[复杂度](#复杂度)		[链表](#链表)		[二叉树](#二叉树)		[排序](#排序)
+
+
+
 ## 一、iOS
 
 
@@ -12,7 +106,7 @@
 
 
 
-#### 四大原则：
+#### 四大原则
 
 - 自己生成的对象，自己持有。
 
@@ -24,19 +118,16 @@
 
 
 
-#### 处理方式：
+#### ARC处理方式
 
 - alloc，new，copy，mutableCopy生成的对象，编译器会在作用域结束时插入release的释放代码。
-
-- autorelese对象，类方法生成的对象，交由autoreleasePool去管理，加入到autoreleasePool中的对象会延迟释放，在autoreleasePool释放时，加入里面的全部对象都会释放。主线程AutoreleasePool创建是在一个RunLoop事件开始之前(push)，AutoreleasePool释放是在一个RunLoop事件即将结束之前(pop)。注意如果遇到内存短时暴增的情况，例如循环多次创建对象时，最好手动加上一个autoreleasePool。
-
 - weak指向的对象被释放时，weak指针被赋值为nil
-
+- autorelese对象，类方法生成的对象，交由autoreleasePool去管理，加入到autoreleasePool中的对象会延迟释放，在autoreleasePool释放时，加入里面的全部对象都会释放。主线程AutoreleasePool创建是在一个RunLoop事件开始之前(push)，AutoreleasePool释放是在一个RunLoop事件即将结束之前(pop)。注意如果遇到内存短时暴增的情况，例如循环多次创建对象时，最好手动加上一个autoreleasePool。
 - unsafe_unretain，不纳入ARC的管理，需要自己手动管理，用于兼容iOS4的，现在已经很少用到
 
 
 
-#### 底层实现：
+#### 底层实现
 
 
 > 程序运行过程中生成的所有对象都会通过其内存地址映射到table_buf中相应的SideTable实例上。
@@ -71,6 +162,8 @@ NSMutableString的内存标识符不能为copy，否则赋值之后会变成NSSt
 
 ##### instancetype
 关联返回类型，会返回一个方法所在类类型的对象，能让编译在编译的时候去判断一些错误，id则不会判断。
+
+
 
 #### 内存泄漏常见场景
 
@@ -132,22 +225,28 @@ NSMutableString的内存标识符不能为copy，否则赋值之后会变成NSSt
 
 
 
-#### ARC下，block从栈上拷贝到堆上的情况：
+#### 拷贝到堆上
 a.block作为函数返回值时
 b.将block赋值给__strong指针时(强引用)
 c.block作为Cocoa API方法名含有UsingBlock的方法参数时
 d.block作为GCD API的方法参数时
 
-#### 不会拷贝到堆上的情况：
+
+
+#### 不会拷贝到堆上
+
 a.block作为函数的参数，除了作为GCD的参数和UsingBlock的情况
 
-捕获：
+
+
+#### 捕获
+
 a.block内部用到才捕获
 b.自动变量，不带 `__block` 修饰，捕获值；带 `__block` 修饰，包装成一个对象，捕获其地址。
 
 
 
-#### `__block` 原理：
+#### `__block` 原理
 
 1. 生成一个对象obj(假设地址为001)，内部含指向自身的指针 `__forwarding`(地址也为001)
 2. 对象传入block中，ARC下block会拷贝到堆上，捕获的对象obj也会被拷贝到堆上，变成newObj(地址为002)
@@ -165,11 +264,13 @@ b.自动变量，不带 `__block` 修饰，捕获值；带 `__block` 修饰，�
 
 
 
-### 多线程
+### 2.多线程
 
 
 
-#### 一个线程可以包含多个队列
+#### 线程与队列关系
+
+一个线程可以包含多个队列
 
 主线程和主队列：主线程执行的不一定是主队列的任务，可能是其他队列任务；主队列的任务一定会放在主线程执行。使用是否是主队列的判断来替代是否是主线程（isMainThread），是更严谨的做法，因为有一些Framework代码如MapKit，不仅会要求代码在主线程执行，还要求在主队列。
 
@@ -199,9 +300,9 @@ static inline void sh_dispatch_main_async_safe(dispatch_block_t block) {
 
 
 
-#### dispatch_barrier_async 
+#### dispatch_barrier 
 
-将异步并行任务分割
+dispatch_barrier_async 将异步并行任务分割
 
 
 
@@ -246,7 +347,7 @@ dispatch_once 内部再调用同一个 dispatch_once 会造成死锁，循环递
 
 
 
-#### dispatch_semaphore 信号量
+#### dispatch_semaphore
 
 信号量小于0时阻塞当前线程，信号量可以由一个线程获取，然后由不同的线程释放。
 
@@ -290,9 +391,9 @@ dispatch_async(asyncQueue2, ^{
 
 
 
-#### NSOperation & NSOperarionQueue
+#### NSOperation
 
-基于GCD封装
+NSOperation & NSOperarionQueue 基于GCD封装
 
 
 
@@ -334,9 +435,9 @@ NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
 
 
 
-#### 互斥锁
+#### 锁
 
-- 可以分为非递归锁/递归锁两种，主要区别在于:同一个线程可以重复获取递归锁，不会死锁; 同一个线程重复获取非递归锁，则会产生死锁。@synchonized(obj)是递归锁。
+- 互斥锁可以分为非递归锁/递归锁两种，主要区别在于:同一个线程可以重复获取递归锁，不会死锁; 同一个线程重复获取非递归锁，则会产生死锁。@synchonized(obj)是递归锁。
 - pthread_mutex作为互斥锁。不是使用忙等，而是同信号量一样，会阻塞线程并进行等待，调用时进行线程上下文切换。pthread_mutex 本身拥有设置协议的功能，通过设置它的协议，来解决优先级反转。设置协议类型为 PTHREAD_PRIO_INHERIT ，运用优先级继承的方式，可以解决优先级反转的问题。
 - NSLock(非递归锁),NSRecursiveLock(递归锁) 等都是基于 pthread_mutex 做实现的。
 
@@ -378,12 +479,12 @@ NSConditionLock 称为条件锁，只有 condition 参数与初始化时候的 c
 
 
 
-#### 手动触发KVO
+#### 手动触发
 监听的属性的值被修改时，就会自动触发KVO。如果想要手动触发KVO，则需要我们自己调用willChangeValueForKey和didChangeValueForKey方法即可在不改变属性值的情况下手动触发KVO，并且这两个方法缺一不可。
 
 
 
-#### 自己实现KVO
+#### 自己实现
 1. objc_allocateClassPair 创建子类
 2. objc_registerClassPair 将子类注册进运行时
 3. class_addMethod 为子类添加一个Setter方法和提供Setter方法的实现
@@ -426,7 +527,7 @@ NSConditionLock 称为条件锁，只有 condition 参数与初始化时候的 c
 
 _objc_init
 
-#### 什么是runtime？
+#### 什么是runtime
 - OC是一门动态语言，与C++这种静态语言不同，静态语言的各种数据结构在编译期已经决定了，不能够被修改。而动态语言却可以使我们在程序运行期，动态的修改一个类的结构，如修改方法实现，绑定实例变量等。
 - OC作为动态语言，它总会想办法将静态语言在编译期决定的事情，推迟到运行期来做。所以，仅有编译器是不够的，它需要一个运行时系统(runtime system)，这也就是OC的runtime系统的意义，它是OC运行框架的基石。
 - 所谓的runtime黑魔法，只是基于OC各种底层数据结构上的应用。
@@ -494,7 +595,8 @@ forwardInvocation 发送
 - 加载：runtime会分别将category 结构体中的instanceMethods, protocols，instanceProperties添加到target class的实例方法列表，协议列表，属性列表中，会将category结构体中的classMethods添加到target class所对应的元类的实例方法列表中。其本质就相当于runtime在运行时期，修改了target class的结构。经过这一番修改，category中的方法，就变成了target class方法列表中的一部分
 - 在remethodizeClass函数中实现加载逻辑，category可以覆盖原方法实现的原因是，category的方法是插入到methodlist的头部的
 - +load方法的调用是在cateogry加载之后的。因此，在+load方法中，是可以调用category方法的
-- 关联对象，为类的对象添加关联对象，不影响该类新创建的实例。存储在AssociationsManager中。
+- 关联对象，为类的对象添加关联对象，不影响该类新创建的实例。存储在AssociationsManager中
+- category不支持添加成员变量，因为category可以在运行时动态地为已有类添加新行为，category是运行期决定的，而成员变量的内存布局在编译器就决定好了，如果支持在运行期添加成员变量的话，会破坏类原有的布局，造成可怕后果。
 
 
 
@@ -545,11 +647,16 @@ do {
 #### 应用
 Timer，事件响应，常驻线程
 
+
+
 #### CADisplayLink
 
 CADisplayLink是一个执行频率（fps）和屏幕刷新相同（可以修改preferredFramesPerSecond改变刷新频率）的定时器，它也需要加入到RunLoop才能执行。与NSTimer类似，CADisplayLink同样是基于CFRunloopTimerRef实现，底层使用mk_timer（可以比较加入到RunLoop前后RunLoop中timer的变化）。和NSTimer相比它精度更高（尽管NSTimer也可以修改精度），不过和NStimer类似的是如果遇到大任务它仍然存在丢帧现象。通常情况下CADisaplayLink用于构建帧动画，看起来相对更加流畅，而NSTimer则有更广泛的用处。
 
+
+
 #### 触摸事件响应
+
 1. 苹果注册了一个Source1来接收系统事件
 2. 一个触摸事件发生后，IOKit会生成一个IOHIDEvent事件并由SpringBoard接收
 3. 接收后通过mach port发送给在前台运行的App
@@ -560,7 +667,13 @@ CADisplayLink是一个执行频率（fps）和屏幕刷新相同（可以修改p
 8. touch事件会沿着响应链查找响应者，找到之后把事件发送给响应者，结束
 9. 找不到响应者则不作处理
 
+
+
+
+
 ### 7.各种优化
+
+
 
 #### 界面卡顿优化
 
@@ -593,33 +706,7 @@ YYFPSLabel，用CADisplayLink实现的，原理是计算一秒内CADisplayLink�
 
 
 
-### 8.调试 LLDB
-
-控制台
-a.p 打印 | 改变值，p == e --，po == e -o --
-b.p/x 16进制，p/t 2进制，p/c /s 字符和字符串
-c.e可以声明变量和赋值
-d.LLDB无法确定返回的类型，加个强转即可
-e. continue(c)，step over(n)，step into(s)，step out(执行完当前函数)，thread return(立刻返回)
-
-断点：
-a.符号断点，在断点栏添加Symbolic
-b.condition，可以为变量添加断点条件
-c.action，可以添加断点时的表达式，比如打印，赋值等
-
-
-
-### 9.缓存
-
-内存缓存，一般由NSCache实现，可设置数目和大小限制，超过会受到内存警告通知，线程安全类。
-
-
-
-10.编译、构建
-
-11.三方库
-
-### 12.启动流程和优化
+#### 启动流程和优化
 
 
 
@@ -645,7 +732,7 @@ c.action，可以添加断点时的表达式，比如打印，赋值等
 3. 程序启动完毕的时候, 就会调用代理的application:didFinishLaunchingWithOptions:方法
 4. 在application:didFinishLaunchingWithOptions:中创建UIWindow
    创建和设置UIWindow的rootViewController
-5.  显示第一个窗口
+5. 显示第一个窗口
 
 
 
@@ -664,7 +751,35 @@ main之后
 
 
 
-### 13.UIKit
+### 8.调试 LLDB
+
+控制台
+a.p 打印 | 改变值，p == e --，po == e -o --
+b.p/x 16进制，p/t 2进制，p/c /s 字符和字符串
+c.e可以声明变量和赋值
+d.LLDB无法确定返回的类型，加个强转即可
+e. continue(c)，step over(n)，step into(s)，step out(执行完当前函数)，thread return(立刻返回)
+
+断点：
+a.符号断点，在断点栏添加Symbolic
+b.condition，可以为变量添加断点条件
+c.action，可以添加断点时的表达式，比如打印，赋值等
+
+
+
+### 9.缓存
+
+内存缓存，一般由NSCache实现，可设置数目和大小限制，超过会受到内存警告通知，线程安全类。
+
+
+
+### 10.编译、构建
+
+### 11.三方库
+
+
+
+### 12.UIKit
 
 - UIView是CALayer的delegate，是CALayer的封装，同时继承与UIResponder，负责响应交互；CALayer负责显示和动画。
 - UIButton继承链：UIControl UIView UIResponder NSObject
@@ -672,7 +787,7 @@ main之后
 - UIEvent事件：触摸，动效(设备摇动)，远程控制，按压
 
 
-### 14.Fundation
+### 13.Fundation
 
 - NSHashTable，可存弱引用的NSSet
 - NSMapTable，可存弱引用的NSDictionary
@@ -811,7 +926,9 @@ fastlane
 
 
 
-### 2.MVC，MVP，MVVM
+### 2.项目架构分层
+
+### MVC，MVP，MVVM
 
 
 
