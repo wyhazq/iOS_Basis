@@ -1,7 +1,7 @@
 # iOS_Basis
 
  
- 
+
 
 
 ## 目录
@@ -854,7 +854,7 @@ slotlock.unlock();
 
 
 
-###3.KVO
+### 3.KVO
 
 #### 系统实现
 
@@ -1651,7 +1651,6 @@ TCP是全双工，两端之间可同时互相发送信息。
 ``` objective-c
 1.keep-alive
 2.pipeline（需要服务器支持）
-
 ```
 
 #### HTTP 2.0
@@ -1887,9 +1886,9 @@ typedef struct ListNode {
 ```
 
 1. 创建链表
-   
+  
    ``` c
-ListNode *listNodeInit(int i) {
+    ListNode *listNodeInit(int i) {
        ListNode *node = (ListNode *)malloc(sizeof(ListNode));
        node->next = NULL;
        node->value = i;
